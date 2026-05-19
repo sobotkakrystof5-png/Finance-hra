@@ -1,0 +1,3266 @@
+<!-- DŮLEŽITÉ: Nahraď YOUR_API_KEY_HERE svým Anthropic API klíčem z console.anthropic.com -->
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoneyMind: Portfolio Challenge — Finanční simulace | Bohatý táta, Chudý táta</title>
+<meta name="description" content="Spravuj 1 200 000 € za 10 kol a zjisti, jestli jsi finančně svobodný. Kupuj nemovitosti, akcie, dluhopisy. Sleduj pasivní příjem v reálném čase. Inspirováno Robertem Kiyosakim.">
+<meta name="keywords" content="finanční simulace, pasivní příjem, nemovitosti, akcie, ETF, dluhopisy, finanční svoboda, Kiyosaki, bohatý táta, investice, portfolio, finanční gramotnost">
+<meta name="author" content="MoneyMind">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MoneyMind: Portfolio Challenge">
+<meta property="og:description" content="Zainvestuj 1 200 000 € za 5 let. Sleduj pasivní příjem. Zjisti, zda přežiješ bez práce.">
+<meta property="og:locale" content="cs_CZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MoneyMind — Finanční simulace s pasivním příjmem">
+<meta name="twitter:description" content="10 kol. 1 200 000 €. Postavíš si finanční svobodu?">
+<link rel="canonical" href="https://moneymind.cz">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg-deep:        #03030a;
+  --bg-primary:     #070710;
+  --bg-card:        #0e0e1a;
+  --bg-card-hover:  #141426;
+  --glass:          rgba(255,255,255,0.03);
+  --glass-hover:    rgba(255,255,255,0.06);
+  --glass-border:   rgba(255,255,255,0.07);
+  --glass-active:   rgba(201,168,76,0.08);
+  --border-active:  rgba(201,168,76,0.6);
+  --gold:           #C9A84C;
+  --gold-light:     #F0C060;
+  --gold-dim:       rgba(201,168,76,0.3);
+  --green:          #22C55E;
+  --green-dim:      rgba(34,197,94,0.15);
+  --red:            #EF4444;
+  --red-dim:        rgba(239,68,68,0.15);
+  --amber:          #F59E0B;
+  --blue:           #3B82F6;
+  --text-primary:   #F0F0F8;
+  --text-secondary: #8888A8;
+  --text-muted:     #44445A;
+  --text-gold:      #C9A84C;
+  --radius-sm:      10px;
+  --radius-md:      16px;
+  --radius-lg:      24px;
+  --shadow-card:    0 8px 40px rgba(0,0,0,0.7);
+  --shadow-gold:    0 0 30px rgba(201,168,76,0.2);
+  --transition:     all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── ORBS ─────────────────────────────── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(120px);
+}
+.orb-1 {
+  width: 600px; height: 600px;
+  background: var(--gold);
+  opacity: 0.12;
+  top: -200px; left: -150px;
+  animation: orbFloat1 16s ease-in-out infinite alternate;
+}
+.orb-2 {
+  width: 500px; height: 500px;
+  background: #1E40AF;
+  opacity: 0.12;
+  bottom: -150px; right: -100px;
+  animation: orbFloat2 18s ease-in-out infinite alternate;
+}
+.orb-3 {
+  width: 400px; height: 400px;
+  background: #4C1D95;
+  opacity: 0.08;
+  top: 40%; left: 40%;
+  transform: translate(-50%,-50%);
+  animation: orbFloat3 14s ease-in-out infinite alternate;
+}
+@keyframes orbFloat1 { from { transform: translate(0,0); } to { transform: translate(80px,60px); } }
+@keyframes orbFloat2 { from { transform: translate(0,0); } to { transform: translate(-60px,40px); } }
+@keyframes orbFloat3 { from { transform: translate(-50%,-50%); } to { transform: translate(-40%,-40%); } }
+
+/* ─── SCREENS ───────────────────────────── */
+.screen {
+  position: relative;
+  z-index: 1;
+  display: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.screen.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── INTRO ─────────────────────────────── */
+#screen-intro {
+  min-height: 100vh;
+  padding: 60px 20px;
+  position: relative;
+}
+#screen-intro.active { display: flex; align-items: flex-start; justify-content: center; }
+
+.intro-wrap {
+  max-width: 1080px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.intro-hero {
+  text-align: center;
+  margin-bottom: 56px;
+  width: 100%;
+}
+
+.intro-mini-book {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 8px 18px 8px 8px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.03));
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 50px;
+  transition: var(--transition);
+}
+.intro-mini-book:hover {
+  background: linear-gradient(135deg, rgba(139,92,246,0.20), rgba(139,92,246,0.05));
+  transform: translateY(-1px);
+  border-color: rgba(139,92,246,0.5);
+}
+.mini-book-img {
+  width: 30px; height: 42px;
+  object-fit: cover;
+  border-radius: 2px 3px 3px 2px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
+  display: block;
+}
+.mini-book-img.img-missing { display: none; }
+.mini-book-text { display: flex; flex-direction: column; gap: 1px; text-align: left; }
+.mini-book-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.mini-book-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.intro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-gold);
+  background: linear-gradient(135deg, rgba(201,168,76,0.10), rgba(201,168,76,0.04));
+  border: 1px solid var(--gold-dim);
+  border-radius: 50px;
+  padding: 10px 22px;
+  margin-bottom: 36px;
+  backdrop-filter: blur(10px);
+}
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: pulseDot 1.8s ease-in-out infinite;
+  box-shadow: 0 0 12px var(--gold);
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.intro-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(72px, 14vw, 160px);
+  line-height: 0.9;
+  letter-spacing: -4px;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg, #F0F0F8 0%, #88889A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.intro-title .title-gold {
+  background: linear-gradient(135deg, #C9A84C 0%, #F0C060 50%, #C9A84C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.intro-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(20px, 3.5vw, 30px);
+  color: var(--text-secondary);
+  font-weight: 300;
+  letter-spacing: 1px;
+  margin-bottom: 28px;
+}
+
+.intro-tagline {
+  font-size: clamp(15px, 2vw, 18px);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 580px;
+  margin: 0 auto 40px;
+}
+.intro-tagline em { color: var(--gold-light); font-style: normal; font-weight: 600; }
+
+.intro-cta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.intro-btn {
+  font-size: 16px;
+  padding: 18px 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.intro-btn-secondary {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.intro-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 64px;
+  width: 100%;
+  max-width: 880px;
+}
+
+.intro-stat {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 24px 18px;
+  text-align: center;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.intro-stat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.4), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: var(--transition);
+  pointer-events: none;
+}
+.intro-stat:hover { transform: translateY(-4px); background: var(--glass-hover); }
+.intro-stat:hover::before { opacity: 1; }
+.stat-icon { font-size: 28px; display: block; margin-bottom: 10px; }
+.intro-stat .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  letter-spacing: -0.5px;
+}
+.intro-stat .lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  display: block;
+}
+
+.intro-features {
+  width: 100%;
+  margin-bottom: 64px;
+}
+.features-title {
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  margin-bottom: 32px;
+  color: var(--text-primary);
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+.feature-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  transition: var(--transition);
+}
+.feature-card:hover {
+  background: var(--glass-hover);
+  border-color: var(--gold-dim);
+  transform: translateY(-3px);
+}
+.feature-icon { font-size: 36px; margin-bottom: 14px; }
+.feature-card h4 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.feature-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ─── INSPIRATION BLOCK (Rich Dad) ──────── */
+.inspiration-block {
+  width: 100%;
+  margin-bottom: 60px;
+  padding: 40px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(201,168,76,0.08), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139,92,246,0.06), transparent 60%),
+    linear-gradient(135deg, rgba(14,14,26,0.6), rgba(7,7,16,0.6));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+.inspiration-label {
+  display: inline-block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--glass-active);
+  border: 1px solid var(--gold-dim);
+  border-radius: 50px;
+  padding: 6px 16px;
+  margin-bottom: 32px;
+}
+.inspiration-content {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Book cover (CSS-only) */
+/* Book cover image wrapper */
+.book-cover-wrap {
+  position: relative;
+  width: 220px;
+  height: 320px;
+  flex-shrink: 0;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+.book-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px 6px 6px 4px;
+  box-shadow:
+    16px 16px 40px rgba(0,0,0,0.55),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+  transform: rotateY(-10deg) rotateX(2deg);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  position: relative;
+  z-index: 2;
+  background: #2A1647; /* fallback color matching cover */
+}
+.book-cover-img::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(95deg, transparent 60%, rgba(255,255,255,0.08) 75%, transparent 90%);
+  pointer-events: none;
+}
+.book-cover-wrap:hover .book-cover-img {
+  transform: rotateY(-3deg) rotateX(0deg) scale(1.04);
+  box-shadow: 22px 22px 50px rgba(0,0,0,0.65);
+}
+.book-cover-wrap::after {
+  content: '';
+  position: absolute;
+  left: 8%; right: 8%;
+  bottom: -18px;
+  height: 14px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.45), transparent 70%);
+  filter: blur(6px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Fallback if image fails — shown only when img-missing class is added */
+.book-fallback {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #4C1D95 0%, #6D28D9 50%, #4C1D95 100%);
+  border-radius: 4px 6px 6px 4px;
+  padding: 24px 18px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  box-shadow: 16px 16px 40px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.08);
+  z-index: 3;
+}
+.book-cover-wrap.img-missing .book-cover-img { display: none; }
+.book-cover-wrap.img-missing .book-fallback { display: flex; }
+.bf-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  color: #FCD34D;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.bf-author {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.9);
+}
+
+.inspiration-text { flex: 1; min-width: 260px; }
+.inspiration-text h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 400;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+.inspiration-text h3 em {
+  color: var(--gold-light);
+  font-style: italic;
+  font-weight: 500;
+}
+.inspiration-text p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.inspiration-text strong { color: var(--text-primary); font-weight: 600; }
+
+.intro-philosophy-inline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1.5;
+  padding: 16px 0 0 20px;
+  border-left: 2px solid var(--gold);
+}
+.intro-philosophy-inline cite {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ─── BUTTONS ───────────────────────────── */
+button { cursor: pointer; border: none; outline: none; font-family: 'DM Sans', sans-serif; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  background-size: 200% 100%;
+  color: #070710;
+  font-weight: 600;
+  border-radius: 50px;
+  padding: 16px 44px;
+  font-size: 15px;
+  transition: background-position 0.4s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+  letter-spacing: 0.3px;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+}
+.btn-primary:hover {
+  transform: scale(1.04) translateY(-1px);
+  background-position: 100% 0;
+  box-shadow: 0 8px 30px rgba(201,168,76,0.45);
+}
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  border-radius: 50px;
+  padding: 12px 28px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+.btn-ghost:hover { border-color: var(--gold-dim); color: var(--text-gold); }
+
+.btn-danger {
+  background: var(--red-dim);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: var(--red);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+.btn-sell {
+  background: var(--green-dim);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: var(--green);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.btn-sell:hover { background: rgba(34,197,94,0.25); }
+
+/* ─── DASHBOARD ─────────────────────────── */
+#dashboard {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  min-height: 72px;
+  background: rgba(7,7,16,0.94);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  gap: 16px;
+}
+.dash-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.dash-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+}
+.dash-stats {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dash-stat {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  transition: var(--transition);
+}
+.dash-stat:hover { background: var(--glass-hover); }
+.dash-stat .ds-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+.dash-stat .ds-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.ds-cash .ds-val { color: var(--text-primary); }
+.ds-nw .ds-val { color: #60A5FA; }
+.ds-income .ds-val { color: var(--green); }
+.ds-expense .ds-val { color: var(--red); }
+.ds-net .ds-val { color: var(--gold); }
+
+.dash-round {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dash-round-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.dash-round-label #dash-round { font-family: 'JetBrains Mono', monospace; color: var(--gold); margin-left: 4px; }
+
+.progress-bar-wrap {
+  width: 110px;
+  height: 5px;
+  background: var(--glass-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+}
+
+/* ─── GAME SCREEN ───────────────────────── */
+#screen-game {
+  padding-top: 88px;
+  padding-bottom: 120px;
+  min-height: 100vh;
+}
+#screen-game.active { display: block; }
+
+.game-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.round-header {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+.round-badge {
+  display: inline-block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--glass-active);
+  border: 1px solid var(--gold-dim);
+  border-radius: 50px;
+  padding: 6px 16px;
+  margin-bottom: 16px;
+}
+.round-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 400;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+  line-height: 1.05;
+}
+.round-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  color: var(--text-secondary);
+  font-style: italic;
+  max-width: 540px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ─── MARKET BOARD ──────────────────────── */
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.market-overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.ticker-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+
+.market-ticker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.ticker-item {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.ticker-item:hover { background: var(--glass-hover); border-color: var(--gold-dim); }
+.ticker-item .ti-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.ticker-item .ti-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ticker-item .ti-emoji { font-size: 16px; flex-shrink: 0; }
+.ticker-item .ti-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.ticker-item .ti-change {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+}
+.ticker-item .ti-change.up   { color: var(--green); }
+.ticker-item .ti-change.down { color: var(--red); }
+.ticker-item .ti-spark {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 18px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.ticker-item .ti-spark svg { width: 100%; height: 100%; display: block; }
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.asset-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  user-select: none;
+  overflow: hidden;
+}
+.asset-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.0), transparent 60%);
+  opacity: 0;
+  transition: var(--transition);
+  pointer-events: none;
+  border-radius: var(--radius-md);
+}
+.asset-card:hover:not(.disabled):not(.cant-afford) {
+  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  border-color: var(--gold-dim);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card), 0 0 0 1px var(--gold-dim);
+}
+.asset-card:hover:not(.disabled)::before { opacity: 1; }
+.asset-card.selected {
+  background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.03));
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-gold), inset 0 0 0 1px rgba(201,168,76,0.3);
+}
+.asset-card.disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.asset-card.cant-afford:not(.disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.asset-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.asset-emoji {
+  font-size: 36px;
+  flex-shrink: 0;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+.asset-info { flex: 1; min-width: 0; }
+.asset-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+}
+.asset-cat-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  border-radius: 6px;
+  padding: 3px 9px;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+.cat-real-estate { background: rgba(59,130,246,0.18); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
+.cat-stocks      { background: rgba(34,197,94,0.18);  color: #86EFAC; border: 1px solid rgba(34,197,94,0.3); }
+.cat-bonds       { background: rgba(245,158,11,0.18); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+.cat-business    { background: rgba(139,92,246,0.18); color: #C4B5FD; border: 1px solid rgba(139,92,246,0.3); }
+.cat-savings     { background: rgba(100,116,139,0.18); color: #CBD5E1; border: 1px solid rgba(100,116,139,0.3); }
+.cat-lifestyle   { background: rgba(236,72,153,0.18);  color: #F9A8D4; border: 1px solid rgba(236,72,153,0.3); }
+.cat-speculation { background: rgba(244,114,182,0.15); color: #FDA4AF; border: 1px solid rgba(244,114,182,0.3); }
+.cat-commodity   { background: rgba(217,119,6,0.18); color: #FBBF24; border: 1px solid rgba(217,119,6,0.3); }
+
+.asset-price {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.asset-cost {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--gold);
+  white-space: nowrap;
+  text-shadow: 0 0 16px rgba(201,168,76,0.3);
+  letter-spacing: -0.5px;
+}
+.price-change {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.price-change.price-up   { color: #22C55E; background: rgba(34,197,94,0.12); }
+.price-change.price-down { color: #EF4444; background: rgba(239,68,68,0.12); }
+
+.sparkline-wrap {
+  height: 32px;
+  margin: 0 -4px 12px;
+  position: relative;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+  border-radius: 8px;
+  padding: 2px 4px;
+}
+.sparkline { width: 100%; height: 100%; display: block; }
+
+.asset-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+.asset-metrics {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.metric {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.metric-green { color: var(--green); }
+.metric-red   { color: var(--red); }
+.metric-amber { color: var(--amber); }
+.metric-blue  { color: var(--blue); }
+
+.asset-qty-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.qty-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.qty-btn:hover { background: var(--glass-active); border-color: var(--gold-dim); }
+.qty-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-width: 24px;
+  text-align: center;
+}
+.qty-cost {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-gold);
+  margin-left: auto;
+}
+
+.selected-check {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: #070710;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.25s, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 16px rgba(201,168,76,0.6);
+  z-index: 2;
+}
+.asset-card.selected .selected-check { opacity: 1; transform: scale(1); }
+
+/* ─── PORTFOLIO PANEL ───────────────────── */
+.portfolio-panel {
+  margin-bottom: 32px;
+}
+.portfolio-list { display: flex; flex-direction: column; gap: 10px; }
+.portfolio-item {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: var(--transition);
+}
+.portfolio-item:hover {
+  background: var(--glass-hover);
+  border-color: var(--gold-dim);
+}
+.pi-emoji {
+  font-size: 26px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+.pi-info { flex: 1; min-width: 0; }
+.pi-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+.pi-details {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.pi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--gold);
+  text-align: right;
+  font-weight: 600;
+}
+.pi-income {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--green);
+  text-align: right;
+  margin-top: 2px;
+}
+
+.empty-portfolio {
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background:
+    radial-gradient(circle at center, rgba(201,168,76,0.03), transparent),
+    var(--glass);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+}
+.empty-portfolio .emp-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+.empty-portfolio .emp-msg { font-style: italic; }
+
+/* ─── ACTION BAR ────────────────────────── */
+.action-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 90;
+  background: rgba(7,7,16,0.96);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+}
+.action-summary {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.action-summary-item { display: flex; flex-direction: column; gap: 2px; }
+.action-summary-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+.action-summary-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+#selected-cost { color: var(--gold); }
+#remaining-cash { color: var(--text-primary); }
+.action-buttons { display: flex; gap: 12px; align-items: center; }
+
+/* ─── OVERLAY SUMMARY ───────────────────── */
+#overlay-summary {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(3,3,10,0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+#overlay-summary.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.summary-orb {
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%);
+  pointer-events: none;
+}
+.summary-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 32px;
+  position: relative;
+}
+.summary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+}
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 10px 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.summary-line.show { opacity: 1; transform: translateY(0); }
+.summary-line.divider {
+  border-top: 1px solid var(--glass-border);
+  background: transparent;
+  border: none;
+  height: 1px;
+  padding: 0;
+}
+.summary-line.total {
+  background: var(--glass-active);
+  border-color: var(--border-active);
+  font-weight: 600;
+  font-size: 16px;
+}
+.sl-label { color: var(--text-secondary); }
+.sl-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.sl-pos { color: var(--green); }
+.sl-neg { color: var(--red); }
+.sl-gold { color: var(--gold); }
+
+.summary-footer {
+  margin-top: 28px;
+  position: relative;
+}
+
+/* ─── RESULT SCREEN ─────────────────────── */
+#screen-result { padding-top: 40px; padding-bottom: 60px; min-height: 100vh; }
+#screen-result.active { display: block; }
+
+.result-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.result-hero {
+  text-align: center;
+  padding: 56px 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.result-mini-book { margin-bottom: 16px; }
+.result-hero-badge {
+  display: inline-block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--glass-active);
+  border: 1px solid var(--gold-dim);
+  border-radius: 50px;
+  padding: 8px 20px;
+  margin-bottom: 24px;
+}
+.result-hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(44px, 8vw, 80px);
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -2px;
+  background: linear-gradient(180deg, #F0F0F8, #88889A);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.result-hero-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.wealth-breakdown {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.wb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.wb-row:last-child { border-bottom: none; }
+.wb-row.total {
+  border-top: 1px solid var(--glass-border);
+  margin-top: 8px;
+  padding-top: 16px;
+  font-weight: 600;
+  font-size: 17px;
+}
+.wb-label { font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.wb-val { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--text-primary); }
+.wb-val.gold { color: var(--gold); }
+
+.cashflow-box {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.cf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.cf-row:last-child { border-bottom: none; }
+.cf-label { font-size: 14px; color: var(--text-secondary); }
+.cf-val { font-family: 'JetBrains Mono', monospace; font-size: 15px; }
+
+/* ─── VERDICT ───────────────────────────── */
+.verdict-badge {
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  text-align: center;
+  margin-bottom: 24px;
+  border: 2px solid;
+  position: relative;
+  overflow: hidden;
+}
+.verdict-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: verdictShine 3s infinite;
+  pointer-events: none;
+}
+@keyframes verdictShine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+.verdict-badge.nestaci  { background: radial-gradient(circle at center, rgba(239,68,68,0.15), rgba(239,68,68,0.03));   border-color: rgba(239,68,68,0.5);   }
+.verdict-badge.hrana    { background: radial-gradient(circle at center, rgba(245,158,11,0.15), rgba(245,158,11,0.03));  border-color: rgba(245,158,11,0.5);  }
+.verdict-badge.nezavis  { background: radial-gradient(circle at center, rgba(34,197,94,0.15), rgba(34,197,94,0.03));   border-color: rgba(34,197,94,0.5);   }
+.verdict-badge.svoboda  { background: radial-gradient(circle at center, rgba(201,168,76,0.18), rgba(201,168,76,0.03));  border-color: rgba(201,168,76,0.6); box-shadow: 0 0 60px rgba(201,168,76,0.15); }
+
+.verdict-icon { font-size: 56px; margin-bottom: 14px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+.verdict-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+.verdict-badge.nestaci .verdict-title  { color: var(--red); }
+.verdict-badge.hrana   .verdict-title  { color: var(--amber); }
+.verdict-badge.nezavis .verdict-title  { color: var(--green); }
+.verdict-badge.svoboda .verdict-title  { color: var(--gold); }
+.verdict-desc { font-size: 14px; color: var(--text-secondary); }
+
+/* ─── PIE CHART ─────────────────────────── */
+.pie-section {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.pie-section h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 24px; }
+.pie-layout { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; justify-content: center; }
+.pie-chart-wrap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.05);
+}
+.pie-chart-wrap::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 60%; height: 60%;
+  transform: translate(-50%,-50%);
+  background: var(--bg-deep);
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+}
+.pie-legend { display: flex; flex-direction: column; gap: 10px; }
+.pie-leg-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.pie-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── AI ANALYSIS ───────────────────────── */
+.ai-section {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 32px;
+}
+.ai-section h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
+.ai-loader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.spinner {
+  width: 22px; height: 22px;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#ai-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  min-height: 60px;
+}
+#ai-text p { margin-bottom: 16px; }
+
+.result-cta { text-align: center; margin-top: 40px; }
+
+/* ─── MUTE BUTTON ───────────────────────── */
+#btn-mute {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(14,14,26,0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  z-index: 300;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+#btn-mute:hover { border-color: var(--gold-dim); color: var(--gold); transform: scale(1.08); }
+
+/* ─── RESPONSIVE ────────────────────────── */
+@media (min-width: 1000px) {
+  .market-grid { grid-template-columns: repeat(3, 1fr); }
+  .game-inner { max-width: 1080px; }
+}
+@media (max-width: 767px) {
+  .dash-stats { gap: 4px; }
+  .dash-stat { padding: 4px 9px; }
+  .dash-stat .ds-val { font-size: 11px; }
+  .dash-stat .ds-label { font-size: 8px; }
+  .market-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .asset-card { padding: 16px; }
+  .asset-name { font-size: 13px; }
+  .asset-cost { font-size: 15px; }
+  .asset-emoji { font-size: 28px; }
+  #dashboard { min-height: 60px; padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  #screen-game { padding-top: 96px; }
+  .intro-stats { grid-template-columns: repeat(2, 1fr); }
+  .features-grid { grid-template-columns: 1fr; }
+  .pt-title { font-size: 42px; }
+  .round-title { font-size: 30px; }
+}
+@media (max-width: 479px) {
+  .market-grid { grid-template-columns: 1fr; }
+  .intro-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dash-brand { font-size: 17px; }
+  .action-bar { flex-direction: column; gap: 12px; padding: 14px 16px; align-items: stretch; }
+  .action-summary { justify-content: space-between; }
+  .action-buttons { justify-content: stretch; }
+  .action-buttons button { flex: 1; }
+  .intro-title { font-size: 64px; letter-spacing: -2px; }
+  .pi-emoji { font-size: 22px; }
+  .portfolio-item { padding: 12px 14px; gap: 10px; }
+  #screen-game { padding-top: 110px; }
+  .intro-philosophy { font-size: 20px; padding: 30px 24px 24px; }
+}
+
+/* ─── REDUCED MOTION ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 150ms !important;
+  }
+}
+
+/* ─── PLAYER TYPE CARD ──────────────────── */
+.player-type-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(201,168,76,0.10), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(76,29,149,0.18), transparent 50%),
+    linear-gradient(135deg, rgba(14,14,26,0.95), rgba(7,7,16,0.95));
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.player-type-card.investor   { border-color: rgba(34,197,94,0.35); }
+.player-type-card.spotrebitel { border-color: rgba(239,68,68,0.35); }
+.player-type-card.setric     { border-color: rgba(59,130,246,0.35); }
+
+.pt-bg-icon {
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 220px;
+  opacity: 0.05;
+  pointer-events: none;
+  line-height: 1;
+}
+.pt-inner { position: relative; z-index: 1; }
+.pt-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-gold);
+  margin-bottom: 14px;
+}
+.pt-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.player-type-card.investor   .pt-title { background: linear-gradient(135deg, #22C55E, #4ADE80); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.player-type-card.spotrebitel .pt-title { background: linear-gradient(135deg, #EF4444, #F87171); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.player-type-card.setric     .pt-title { background: linear-gradient(135deg, #3B82F6, #60A5FA); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pt-desc { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; max-width: 540px; }
+.pt-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--gold-light);
+  border-left: 2px solid var(--gold);
+  padding-left: 16px;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+/* ─── MISC ──────────────────────────────── */
+.hidden { display: none !important; }
+hr.thin { border: none; border-top: 1px solid var(--glass-border); margin: 20px 0; }
+
+.notification {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  z-index: 400;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.notification.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.game-sections { display: flex; flex-direction: column; gap: 0; }
+.game-section { margin-bottom: 32px; }
+</style>
+</head>
+<body>
+
+<!-- Orbs -->
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
+
+<!-- Mute Button -->
+<button id="btn-mute" aria-label="Ztlumit hudbu" title="Ztlumit / zapnout hudbu">🔊</button>
+
+<!-- Notification -->
+<div class="notification" id="notification" role="alert" aria-live="polite"></div>
+
+<!-- ═══ SCREEN: INTRO ═══ -->
+<section id="screen-intro" class="screen active" role="main">
+  <div class="intro-wrap">
+    <div class="intro-hero">
+      <div class="intro-mini-book">
+        <img class="mini-book-img" src="bohaty-tata.jpg"
+             alt="Obálka knihy Bohatý táta, Chudý táta od Roberta T. Kiyosakiho"
+             onerror="this.classList.add('img-missing')">
+        <div class="mini-book-text">
+          <span class="mini-book-label">Inspirováno bestsellerem</span>
+          <span class="mini-book-title">Bohatý táta, Chudý táta</span>
+        </div>
+      </div>
+      <span class="intro-badge" aria-hidden="true">
+        <span class="badge-dot"></span>
+        Finanční simulace · 5 let · 1,2 milionu eur
+      </span>
+      <h1 class="intro-title">Money<span class="title-gold">Mind</span></h1>
+      <p class="intro-sub">Portfolio Challenge</p>
+      <p class="intro-tagline">Dostaneš 1,2 milionu eur. Máš 5 let na to, abys postavil/a portfolio, které tě uživí <em>bez práce</em>. Co s nimi uděláš?</p>
+
+      <div class="intro-cta">
+        <button class="btn-primary intro-btn" id="btn-start" tabindex="0">
+          <span>Začít hru</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <a href="#features" class="btn-ghost intro-btn-secondary">Jak to funguje ↓</a>
+      </div>
+    </div>
+
+    <div class="intro-stats">
+      <div class="intro-stat">
+        <span class="stat-icon" aria-hidden="true">💶</span>
+        <span class="val">1 200 000 €</span>
+        <span class="lbl">Startovní kapitál</span>
+      </div>
+      <div class="intro-stat">
+        <span class="stat-icon" aria-hidden="true">⏱</span>
+        <span class="val">10 kol</span>
+        <span class="lbl">= 5 let</span>
+      </div>
+      <div class="intro-stat">
+        <span class="stat-icon" aria-hidden="true">📦</span>
+        <span class="val">20 aktiv</span>
+        <span class="lbl">na výběr</span>
+      </div>
+      <div class="intro-stat">
+        <span class="stat-icon" aria-hidden="true">🎯</span>
+        <span class="val">3 typy</span>
+        <span class="lbl">investora</span>
+      </div>
+    </div>
+
+    <div id="features" class="intro-features">
+      <h3 class="features-title">Co tě čeká</h3>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🏠</div>
+          <h4>Nemovitosti & pasivní příjem</h4>
+          <p>Kupuj byty, domy, komerční prostory. Měsíční nájem ti chodí na účet — i když spíš.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h4>Akcie, ETF & dluhopisy</h4>
+          <p>S&amp;P 500, dividendové akcie, tech growth. Výnos s rizikem nebo stabilita s pomalým růstem.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎲</div>
+          <h4>Spekulace & vysoké riziko</h4>
+          <p>Krypto, startup investice, NFT, forex. Můžou vydělat 6×, ale taky se ztratit nadobro.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏎</div>
+          <h4>Životní styl & luxus</h4>
+          <p>Auto, hodinky, dovolená. Užiješ si — ale uvidíš, co to udělá s tvými penězi.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="inspiration-block">
+      <div class="inspiration-label">Inspirace</div>
+      <div class="inspiration-content">
+        <div class="book-cover-wrap">
+          <img class="book-cover-img" src="bohaty-tata.jpg"
+               alt="Obálka knihy Bohatý táta, Chudý táta — Robert T. Kiyosaki"
+               onerror="this.parentNode.classList.add('img-missing')">
+          <div class="book-fallback" aria-hidden="true">
+            <span class="bf-author">ROBERT T. KIYOSAKI</span>
+            <span class="bf-title">Bohatý táta,<br>Chudý táta</span>
+          </div>
+        </div>
+        <div class="inspiration-text">
+          <h3>Postaveno na filozofii bestselleru<br><em>Bohatý táta, Chudý táta</em></h3>
+          <p>Robert T. Kiyosaki naučil miliony lidí jednu prostou věc: <strong>aktiva dávají peníze do tvé kapsy. Pasiva ti je z kapsy berou.</strong> Tato hra tě donutí to pochopit na vlastní kůži.</p>
+          <blockquote class="intro-philosophy-inline">
+            „Bohatí kupují aktiva. Chudí kupují pasiva a myslí si, že kupují aktiva."
+            <cite>— Robert T. Kiyosaki</cite>
+          </blockquote>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DASHBOARD (fixed) ═══ -->
+<header id="dashboard" class="hidden" role="banner" aria-label="Herní panel">
+  <div class="dash-left">
+    <span class="dash-brand">Money<span style="color:var(--gold)">Mind</span></span>
+  </div>
+  <div class="dash-stats">
+    <div class="dash-stat ds-cash">
+      <span class="ds-label">💶 Hotovost</span>
+      <span class="ds-val" id="dash-cash">1 200 000 €</span>
+    </div>
+    <div class="dash-stat ds-nw">
+      <span class="ds-label">📊 Majetek</span>
+      <span class="ds-val" id="dash-nw">1 200 000 €</span>
+    </div>
+    <div class="dash-stat ds-income">
+      <span class="ds-label">💚 Příjem/m</span>
+      <span class="ds-val" id="dash-income">0 €</span>
+    </div>
+    <div class="dash-stat ds-expense">
+      <span class="ds-label">🔴 Náklady/m</span>
+      <span class="ds-val" id="dash-expense">0 €</span>
+    </div>
+    <div class="dash-stat ds-net">
+      <span class="ds-label">💛 Čistý/m</span>
+      <span class="ds-val" id="dash-net">0 €</span>
+    </div>
+  </div>
+  <div class="dash-round">
+    <span class="dash-round-label">Kolo <span id="dash-round">01 / 10</span></span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar"
+           role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="10"
+           style="width:10%"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ SCREEN: GAME ═══ -->
+<section id="screen-game" class="screen" role="main" aria-label="Herní obrazovka">
+  <div class="game-inner">
+    <div class="round-header">
+      <span class="round-badge" id="round-badge">Kolo 1 z 10</span>
+      <h2 class="round-title" id="round-title">Co s těmi penězi uděláš?</h2>
+      <p class="round-quote" id="round-quote"></p>
+    </div>
+    <div class="game-sections">
+      <!-- Market Overview (live ticker) -->
+      <div class="game-section">
+        <div class="market-overview-header">
+          <p class="section-title">Aktuální trh — vývoj cen</p>
+          <span class="ticker-pulse"><span class="pulse-dot"></span>Live</span>
+        </div>
+        <div class="market-ticker" id="market-ticker" role="region" aria-label="Tržní ceny"></div>
+      </div>
+      <!-- Market Board -->
+      <div class="game-section">
+        <p class="section-title">Tržiště — Kolo <span id="market-round-num">1</span></p>
+        <div class="market-grid" id="market-grid" role="list" aria-label="Dostupná aktiva"></div>
+      </div>
+      <!-- Portfolio -->
+      <div class="game-section" id="portfolio-section">
+        <p class="section-title">Moje portfolio</p>
+        <div class="portfolio-list" id="portfolio-list" role="list" aria-label="Vlastněná aktiva"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Action bar -->
+  <div class="action-bar" id="action-bar">
+    <div class="action-summary">
+      <div class="action-summary-item">
+        <span class="action-summary-label">Vybráno za</span>
+        <span class="action-summary-val" id="selected-cost">0 €</span>
+      </div>
+      <div class="action-summary-item">
+        <span class="action-summary-label">Zbyde hotovost</span>
+        <span class="action-summary-val" id="remaining-cash">1 200 000 €</span>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="btn-ghost" id="btn-skip" tabindex="0">Přeskočit kolo</button>
+      <button class="btn-primary" id="btn-confirm" tabindex="0">Potvrdit nákupy →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ OVERLAY: ROUND SUMMARY ═══ -->
+<div id="overlay-summary" role="dialog" aria-modal="true" aria-label="Souhrn kola" aria-live="assertive">
+  <div class="summary-orb" aria-hidden="true"></div>
+  <h2 class="summary-title" id="summary-title">Souhrn kola</h2>
+  <div class="summary-lines" id="summary-lines"></div>
+  <div class="summary-footer">
+    <button class="btn-primary" id="btn-next-round" tabindex="0" style="min-width:180px">Další kolo →</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: RESULT ═══ -->
+<section id="screen-result" class="screen" role="main" aria-label="Výsledky">
+  <div class="result-inner">
+    <div class="result-hero">
+      <div class="intro-mini-book result-mini-book">
+        <img class="mini-book-img" src="bohaty-tata.jpg"
+             alt="Obálka knihy Bohatý táta, Chudý táta"
+             onerror="this.classList.add('img-missing')">
+        <div class="mini-book-text">
+          <span class="mini-book-label">Inspirováno</span>
+          <span class="mini-book-title">Bohatý táta, Chudý táta</span>
+        </div>
+      </div>
+      <span class="result-hero-badge" aria-hidden="true">✓ Simulace dokončena</span>
+      <h1 class="result-hero-title">Majetek po 5 letech</h1>
+      <p class="result-hero-sub">Toto je tvůj výsledek — 10 kol, 1,2 milionu eur, řada rozhodnutí</p>
+    </div>
+
+    <!-- Wealth breakdown -->
+    <div class="wealth-breakdown" id="wealth-breakdown">
+      <div class="wb-row"><span class="wb-label"><span aria-hidden="true">💶</span> Hotovost</span><span class="wb-val" id="r-cash">—</span></div>
+      <div class="wb-row"><span class="wb-label"><span aria-hidden="true">🏠</span> Nemovitosti</span><span class="wb-val" id="r-real-estate">—</span></div>
+      <div class="wb-row"><span class="wb-label"><span aria-hidden="true">📈</span> Akcie &amp; ETF</span><span class="wb-val" id="r-stocks">—</span></div>
+      <div class="wb-row"><span class="wb-label"><span aria-hidden="true">🏦</span> Dluhopisy</span><span class="wb-val" id="r-bonds">—</span></div>
+      <div class="wb-row"><span class="wb-label"><span aria-hidden="true">⚡</span> Ostatní aktiva</span><span class="wb-val" id="r-other">—</span></div>
+      <div class="wb-row total"><span class="wb-label">📊 ČISTÝ MAJETEK</span><span class="wb-val gold" id="r-nw">—</span></div>
+    </div>
+
+    <!-- Cash flow -->
+    <div class="cashflow-box" id="cashflow-box">
+      <p class="section-title" style="margin-bottom:16px">Měsíční cash flow</p>
+      <div class="cf-row"><span class="cf-label">💚 Příjmy celkem</span><span class="cf-val" id="r-inc" style="color:var(--green)">—</span></div>
+      <div class="cf-row"><span class="cf-label">🔴 Náklady na majetek</span><span class="cf-val" id="r-exp" style="color:var(--red)">—</span></div>
+      <div class="cf-row"><span class="cf-label">🏡 Životní náklady</span><span class="cf-val" id="r-life" style="color:var(--red)">−1 000 €</span></div>
+      <div class="cf-row" style="border-bottom:none;font-weight:600"><span class="cf-label">💛 ČISTÝ PŘÍJEM</span><span class="cf-val" id="r-net" style="font-size:17px">—</span></div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="verdict-badge" id="verdict-badge">
+      <div class="verdict-icon" id="verdict-icon" aria-hidden="true"></div>
+      <div class="verdict-title" id="verdict-title"></div>
+      <div class="verdict-desc" id="verdict-desc"></div>
+    </div>
+
+    <!-- Player Type Card -->
+    <div class="player-type-card" id="player-type-card">
+      <div class="pt-bg-icon" id="pt-bg-icon" aria-hidden="true"></div>
+      <div class="pt-inner">
+        <div class="pt-label">Tvůj typ investora</div>
+        <h2 class="pt-title" id="pt-title">—</h2>
+        <p class="pt-desc" id="pt-desc">—</p>
+        <div class="pt-quote" id="pt-quote">—</div>
+      </div>
+    </div>
+
+    <!-- Pie chart -->
+    <div class="pie-section">
+      <h3>Rozložení portfolia</h3>
+      <div class="pie-layout">
+        <div class="pie-chart-wrap" id="pie-chart" role="img" aria-label="Graf rozložení portfolia"></div>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+
+    <!-- AI Analysis -->
+    <div class="ai-section">
+      <h3>Analýza AI — Finanční kouč</h3>
+      <div id="ai-loader" class="ai-loader">
+        <div class="spinner" aria-hidden="true"></div>
+        <span>Zpracovávám tvůj finanční profil…</span>
+      </div>
+      <div id="ai-text" aria-live="polite" aria-label="Analýza od AI"></div>
+    </div>
+
+    <div class="result-cta">
+      <button class="btn-primary" id="btn-restart" tabindex="0">Hrát znovu →</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ═══════════════════════════════════════════════
+   ASSET CATALOG
+═══════════════════════════════════════════════ */
+const ASSETS = [
+  {
+    id:'house_rental', name:'Rodinný dům k pronájmu', emoji:'🏠',
+    category:'Nemovitost', cost:300000,
+    monthlyIncome:1400, monthlyMaintenance:200,
+    appreciates:true, canSell:true, maxQuantity:2,
+    description:'Stabilní nájemníci, hrubý výnos 5,6 % ročně po nákladech.'
+  },
+  {
+    id:'apartment_investment', name:'Investiční byt 2+kk', emoji:'🏢',
+    category:'Nemovitost', cost:200000,
+    monthlyIncome:1100, monthlyMaintenance:100,
+    appreciates:true, canSell:true, maxQuantity:3,
+    description:'Kompaktní byt v centru, vysoká poptávka, výnos 6 % ročně.'
+  },
+  {
+    id:'studio_airbnb', name:'Garsonka — krátkodobé pronájmy', emoji:'🛋️',
+    category:'Nemovitost', cost:130000,
+    monthlyIncome:1300, monthlyMaintenance:300,
+    appreciates:true, canSell:true, maxQuantity:4,
+    description:'Airbnb provoz, turistická lokalita. Čistý výnos ~9,2 % ročně.'
+  },
+  {
+    id:'commercial_space', name:'Komerční prostor — prodejna', emoji:'🏪',
+    category:'Nemovitost', cost:450000,
+    monthlyIncome:2800, monthlyMaintenance:400,
+    appreciates:true, canSell:true, maxQuantity:1,
+    description:'Prémiová lokace, firemní nájemník, smlouva 5 let. Výnos 6,4 %.'
+  },
+  {
+    id:'sp500_etf', name:'S&P 500 ETF', emoji:'📈',
+    category:'Akcie & ETF', cost:50000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.09, trendGrowth:0.012,
+    canSell:true, maxQuantity:10,
+    description:'Světový index, průměr ~7 % ročně. Pouze růst, žádné dividendy.'
+  },
+  {
+    id:'dividend_stocks', name:'Dividendové akcie — blue chips', emoji:'💰',
+    category:'Akcie & ETF', cost:80000,
+    monthlyIncome:400, stockGrowth:true,
+    volatility:0.06, trendGrowth:0.005,
+    canSell:true, maxQuantity:5,
+    description:'Coca-Cola, J&J, Realty Income. Dividenda 6 % + mírný růst.'
+  },
+  {
+    id:'tech_stocks', name:'Tech Growth akcie', emoji:'💻',
+    category:'Akcie & ETF', cost:60000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.20, trendGrowth:0.018,
+    canSell:true, maxQuantity:8,
+    description:'NVIDIA, Apple, Microsoft. Vysoká volatilita, vysoký potenciál.'
+  },
+  {
+    id:'gold', name:'Zlato — investiční slitky', emoji:'🥇',
+    category:'Komodity', cost:25000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.07, trendGrowth:0.012,
+    canSell:true, maxQuantity:12,
+    description:'Bezpečný přístav v dobách krize. Stabilní, pomalý růst, hedge proti inflaci.'
+  },
+  {
+    id:'silver', name:'Stříbro — průmyslový kov', emoji:'🥈',
+    category:'Komodity', cost:10000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.18, trendGrowth:0.008,
+    canSell:true, maxQuantity:25,
+    description:'Volatilnější než zlato, vázané na průmysl. Vyšší výkyvy, vyšší potenciál.'
+  },
+  {
+    id:'copper', name:'Měď — surovinový kontrakt', emoji:'🟠',
+    category:'Komodity', cost:8000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.22, trendGrowth:0.010,
+    canSell:true, maxQuantity:25,
+    description:'Vázaná na stavebnictví a elektromobilitu. Cyklická komodita, citlivá na recesi.'
+  },
+  {
+    id:'oil', name:'Ropa — ropný kontrakt', emoji:'🛢',
+    category:'Komodity', cost:15000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.28, trendGrowth:0.003,
+    canSell:true, maxQuantity:15,
+    description:'Geopoliticky volatilní. Vysoké výkyvy podle událostí ve světě.'
+  },
+  {
+    id:'water', name:'Voda — vodárenské podíly', emoji:'💧',
+    category:'Komodity', cost:30000,
+    monthlyIncome:120, stockGrowth:true,
+    volatility:0.06, trendGrowth:0.020,
+    canSell:true, maxQuantity:8,
+    description:'„Ropa 21. století." Pomalý ale stabilní růst plus malé dividendy.'
+  },
+  {
+    id:'gov_bond_2yr', name:'Státní dluhopisy — 2 kola', emoji:'📜',
+    category:'Dluhopisy', cost:10000,
+    isBond:true, bondMaturityRounds:2, bondReturn:10900,
+    monthlyIncome:0, canSell:false, maxQuantity:20,
+    description:'Investuješ 10 000 €, za 2 kola dostaneš 10 900 €. Nulové riziko.'
+  },
+  {
+    id:'corp_bond_4yr', name:'Korporátní dluhopisy — 4 kola', emoji:'🏦',
+    category:'Dluhopisy', cost:25000,
+    isBond:true, bondMaturityRounds:4, bondReturn:30000,
+    monthlyIncome:0, canSell:false, maxQuantity:10,
+    description:'25 000 € → 30 000 € za 4 kola. Výnos 20 %, mírné riziko.'
+  },
+  {
+    id:'online_business', name:'E-shop — podíl 30 %', emoji:'🛒',
+    category:'Podnikání', cost:180000,
+    monthlyIncome:1800, monthlyMaintenance:0,
+    canSell:true, maxQuantity:1,
+    description:'Pasivní příjem z e-commerce firmy. Prodej za pořizovací cenu.'
+  },
+  {
+    id:'solar_panels', name:'Solární elektrárna', emoji:'☀️',
+    category:'Podnikání', cost:40000,
+    monthlyIncome:350, monthlyMaintenance:20,
+    canSell:false, maxQuantity:3,
+    description:'Prodej elektřiny do sítě, výnos ~10 % ročně, životnost 25 let.'
+  },
+  {
+    id:'savings_account', name:'Termínovaný vklad — 3 % p.a.', emoji:'🏦',
+    category:'Spoření', cost:20000,
+    monthlyIncome:50, canSell:true, maxQuantity:20,
+    description:'Bezpečné, nízký výnos 3 % ročně. Chrání před inflací jen z části.'
+  },
+  {
+    id:'luxury_car', name:'Luxusní auto — Porsche 911', emoji:'🏎️',
+    category:'Životní styl', cost:150000,
+    monthlyMaintenance:600, isLiability:true, canSell:false, maxQuantity:1,
+    description:'Auto je pasivum. Ztrácí hodnotu, stojí 600 €/měsíc navíc.'
+  },
+  {
+    id:'vacation', name:'Luxusní dovolená — 3 týdny', emoji:'🌴',
+    category:'Životní styl', cost:25000,
+    isLiability:true, canSell:false, maxQuantity:10,
+    description:'Skvělý zážitek, nulový finanční výnos. Peníze odejdou navždy.'
+  },
+  {
+    id:'rolex_watch', name:'Hodinky Rolex Submariner', emoji:'⌚',
+    category:'Životní styl', cost:15000,
+    isLiability:true, canSell:false, maxQuantity:5,
+    description:'Luxus bez výnosu. Pasivum maskované jako aktivum.'
+  },
+  {
+    id:'motorcycle', name:'Motorka — Ducati Panigale', emoji:'🏍️',
+    category:'Životní styl', cost:28000,
+    monthlyMaintenance:200, isLiability:true, canSell:false, maxQuantity:2,
+    description:'Adrenalin a styl. Stojí 200 €/měsíc na provoz a pojištění.'
+  },
+  {
+    id:'designer_furniture', name:'Designový nábytek do bytu', emoji:'🛋',
+    category:'Životní styl', cost:35000,
+    isLiability:true, canSell:false, maxQuantity:2,
+    description:'Italský designový nábytek. Komfort domova, ale hodnota časem klesá.'
+  },
+  {
+    id:'crypto_btc', name:'Bitcoin & krypto portfolio', emoji:'₿',
+    category:'Spekulace', cost:30000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.55, trendGrowth:0.015,
+    canSell:true, maxQuantity:10,
+    description:'Extrémně volatilní. Může vystřelit o 300 %, ale klidně propadnout o 70 %.'
+  },
+  {
+    id:'startup_seed', name:'Startup — seed investice', emoji:'🚀',
+    category:'Spekulace', cost:50000,
+    monthlyIncome:0, isRisky:true,
+    riskFailChance:0.78, riskMultiplier:8,
+    canSell:true, maxQuantity:5,
+    description:'Velmi vysoké riziko. 78 % šance, že firma zkrachuje a přijdeš o vše. 22 % šance na 8× zhodnocení.'
+  },
+  {
+    id:'nft_collection', name:'NFT kolekce — Digital Art', emoji:'🎨',
+    category:'Spekulace', cost:20000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.55, trendGrowth:-0.08,
+    canSell:true, maxQuantity:8,
+    description:'Sběratelská hodnota se mění s trendem. Bublina splaskla — spíše ztratíš, než vyděláš.'
+  },
+  {
+    id:'penny_stocks', name:'Penny stocks — malé firmy', emoji:'🎲',
+    category:'Spekulace', cost:15000,
+    monthlyIncome:0, stockGrowth:true,
+    volatility:0.42, trendGrowth:-0.005,
+    canSell:true, maxQuantity:10,
+    description:'Levné akcie malých firem. Mohou prudce růst i klesat. Velká nejistota a manipulace trhu.'
+  },
+  {
+    id:'forex_trading', name:'Forex trading účet', emoji:'💱',
+    category:'Spekulace', cost:40000,
+    monthlyIncome:0, isRisky:true,
+    riskFailChance:0.70, riskMultiplier:4,
+    canSell:true, maxQuantity:3,
+    description:'Spekulativní obchodování s měnami. 70 % šance ztráty, 30 % šance na 4× výnos.'
+  },
+  {
+    id:'wine_collection', name:'Sbírka exkluzivních vín', emoji:'🍷',
+    category:'Spekulace', cost:45000,
+    appreciates:true, canSell:true, maxQuantity:2,
+    description:'Alternativní investice. Hodnota roste pomalu (+1,5 % za kolo), ale stabilně.'
+  }
+];
+
+const ASSET_MAP = Object.fromEntries(ASSETS.map(a => [a.id, a]));
+
+/* Market board rotation — 9 items per round, mix of safe/risky/lifestyle/commodities */
+const ROUND_BOARDS = [
+  ['house_rental','apartment_investment','sp500_etf','gold','gov_bond_2yr','savings_account','crypto_btc','vacation','luxury_car'],
+  ['studio_airbnb','dividend_stocks','silver','gov_bond_2yr','solar_panels','penny_stocks','rolex_watch','savings_account','corp_bond_4yr'],
+  ['apartment_investment','tech_stocks','commercial_space','copper','startup_seed','gov_bond_2yr','motorcycle','online_business','vacation'],
+  ['house_rental','sp500_etf','dividend_stocks','oil','solar_panels','nft_collection','savings_account','rolex_watch','corp_bond_4yr'],
+  ['studio_airbnb','tech_stocks','commercial_space','gold','crypto_btc','gov_bond_2yr','luxury_car','online_business','wine_collection'],
+  ['apartment_investment','dividend_stocks','solar_panels','water','forex_trading','savings_account','motorcycle','gov_bond_2yr','house_rental'],
+  ['tech_stocks','commercial_space','sp500_etf','silver','startup_seed','corp_bond_4yr','rolex_watch','studio_airbnb','designer_furniture'],
+  ['house_rental','dividend_stocks','solar_panels','oil','crypto_btc','gov_bond_2yr','savings_account','luxury_car','apartment_investment'],
+  ['tech_stocks','online_business','sp500_etf','gold','penny_stocks','corp_bond_4yr','motorcycle','studio_airbnb','wine_collection'],
+  ['apartment_investment','dividend_stocks','commercial_space','water','copper','gov_bond_2yr','solar_panels','sp500_etf','nft_collection']
+];
+
+const QUOTES = [
+  "Bohatí kupují aktiva. Chudí kupují pasiva.",
+  "Váš dům není aktivum — je to pasivum.",
+  "Nedělejte práci pro peníze — nechte peníze pracovat pro vás.",
+  "Riziko přichází z toho, že nevíte, co děláte.",
+  "Největší aktivum, které máte, je vaše mysl.",
+  "Chudí pracují pro peníze — bohatí nechávají peníze pracovat za ně.",
+  "Finanční svoboda je dostupná těm, kdo se o ni skutečně zajímají.",
+  "Nevysněte si velký život — žijte ho.",
+  "Čím více dáváš, tím více dostáváš.",
+  "Nebojte se prohrát. Prohry jsou součástí procesu úspěchu."
+];
+
+const FALLBACK_RESULTS = {
+  svoboda: "Dosáhl/a jsi finanční svobody — peníze pracují za tebe i ve spánku. Tvé portfolio generuje více, než potřebuješ k životu. Kiyosaki by byl hrdý: přesně takto vypadá skutečné bohatství.\n\nKaždé aktivum, které jsi koupil/a, je malý motor vydělávající bez tvé přítomnosti. Rozhodl/a ses nekupovat statický luxus, ale živé stroje na peníze.\n\nJedin věc, která by tvůj výsledek ještě posílila, by bylo reinvestovat část příjmů zpět místo hromadění hotovosti.\n\nV reálném životě by ti toto portfolio zajistilo finanční nezávislost — mohl/a by ses věnovat čemukoli bez ohledu na výši výplaty.\n\nPeníze ti neslouží — pracují.",
+  nezavislost: "Vybudoval/a jsi solidní finanční základ, který ti dává volnost volby. Tvůj měsíční příjem pokrývá základní životní náklady bez nutnosti zaměstnání.\n\nJeden až dva další dobré investiční kroky a finanční svoboda je na dosah. Správně jsi kombinoval/a typy aktiv.\n\nDalší fáze: přesuň část hotovosti do výnosnějších aktiv místo spánku na účtu.\n\nV reálném životě by toto portfolio zajistilo stabilitu s malou rezervou na nečekané výdaje.\n\nJsi blíž, než si myslíš — jen neulev.",
+  hrana: "Jsi na správné cestě, ale portfolio potřebuje posílit. Měsíční příjem pokryje přežití, ale bez velké rezervy na nečekané výdaje.\n\nPasiva nebo jednorázové výdaje spolykaly kapitál, který mohl generovat příjem. Příjmová aktiva musí být základ.\n\nPřidej jedno nebo dvě výnosná aktiva — i jeden investiční byt by výrazně změnil situaci.\n\nV reálném životě bys musel/a přivydělávat nebo radikálně snížit výdaje.\n\nKaždá správná investice tě posouvá — jeden krok po druhém.",
+  nestaci: "Tentokrát to nevyšlo — ale důležité je, co ses naučil/a. Pasiva a jednorázové výdaje spolykaly kapitál, který mohl generovat příjem.\n\nPříště začni s příjmovými aktivy a přidávej luxus až z jejich výnosů — ne z kapitálu.\n\nKonkrétně: dva byty a ETF fond by ti za 5 let přinesly 2-3x víc měsíčního příjmu.\n\nV reálném životě bys musel/a zůstat zaměstnán/a a začít investovat od základu.\n\nKiyosaki říká: neděláš chyby — získáváš zkušenosti."
+};
+
+/* ═══════════════════════════════════════════════
+   AUDIO ENGINE
+═══════════════════════════════════════════════ */
+const AudioEngine = {
+  ctx: null, master: null, isMuted: false, initialized: false,
+
+  init() {
+    if (this.initialized) return;
+    this.initialized = true;
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0;
+      this.master.connect(this.ctx.destination);
+      this.master.gain.linearRampToValueAtTime(0.10, this.ctx.currentTime + 4);
+      this.buildDrones();
+      this.buildPad();
+      this.scheduleBells();
+    } catch(e) { /* Audio not supported */ }
+  },
+
+  buildDrones() {
+    const freqs = [[41.2, 0.5], [82.4, 0.3], [123.6, 0.2]];
+    freqs.forEach(([freq, gain], i) => {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.value = gain * 0.08;
+      osc.connect(g); g.connect(this.master);
+      osc.start();
+      if (i === 2) {
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        lfo.frequency.value = 0.06;
+        lfoGain.gain.value = 2;
+        lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+        lfo.start();
+      }
+    });
+  },
+
+  buildPad() {
+    [[164.8, 0.12], [165.2, 0.12]].forEach(([freq, gain]) => {
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const g = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      g.gain.value = gain * 0.12;
+      osc.connect(filter); filter.connect(g); g.connect(this.master);
+      osc.start();
+    });
+  },
+
+  scheduleBells() {
+    if (!this.ctx) return;
+    const scale = [164.8,196.0,220.0,261.6,293.7,329.6,392.0,440.0];
+    const playBell = () => {
+      if (!this.ctx) return;
+      const freq = scale[Math.floor(Math.random() * scale.length)];
+      const osc = this.ctx.createOscillator();
+      const env = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      env.gain.setValueAtTime(0, this.ctx.currentTime);
+      env.gain.linearRampToValueAtTime(0.15, this.ctx.currentTime + 0.015);
+      env.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 3);
+      osc.connect(env); env.connect(this.master);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 3.1);
+      setTimeout(playBell, 3500 + Math.random() * 7000);
+    };
+    setTimeout(playBell, 2000);
+  },
+
+  toggle() {
+    if (!this.ctx) return false;
+    this.isMuted = !this.isMuted;
+    const target = this.isMuted ? 0 : 0.10;
+    this.master.gain.linearRampToValueAtTime(target, this.ctx.currentTime + 0.5);
+    return this.isMuted;
+  }
+};
+
+/* ═══════════════════════════════════════════════
+   GAME STATE
+═══════════════════════════════════════════════ */
+const GameState = {
+  cash: 1200000,
+  round: 1,
+  portfolio: [],
+  purchasesThisRound: [],
+  history: [],
+  // Spending tracker for end-game classification
+  spent: {
+    realEstate: 0,
+    stocks: 0,
+    bonds: 0,
+    business: 0,
+    savings: 0,
+    speculation: 0,
+    lifestyle: 0,
+    commodity: 0
+  },
+  marketPrices: {},
+  priceHistory: {},
+  livingExpensesPaid: 0,
+  totalLossesFromRisk: 0,
+  totalGainsFromRisk: 0,
+
+  get netWorth() {
+    return this.cash + this.portfolio.reduce((sum, p) => {
+      if (p.item.isLiability) return sum;
+      return sum + (p.currentValue * p.qty);
+    }, 0);
+  },
+
+  get monthlyIncome() {
+    return this.portfolio.reduce((sum, p) => {
+      return sum + ((p.item.monthlyIncome || 0) * p.qty);
+    }, 0);
+  },
+
+  get monthlyExpenses() {
+    return this.portfolio.reduce((sum, p) => {
+      return sum + ((p.item.monthlyMaintenance || 0) * p.qty);
+    }, 0);
+  },
+
+  get netMonthlyFlow() {
+    return this.monthlyIncome - this.monthlyExpenses;
+  },
+
+  getOwnedQty(itemId) {
+    const entry = this.portfolio.find(p => p.item.id === itemId);
+    return entry ? entry.qty : 0;
+  },
+
+  buyItem(itemId, qty) {
+    const item = ASSET_MAP[itemId];
+    if (!item || qty <= 0) return false;
+    const unitPrice = this.currentPrice(itemId);
+    const totalCost = unitPrice * qty;
+    if (totalCost > this.cash) return false;
+    const maxOwn = item.maxQuantity || 1;
+    if (this.getOwnedQty(itemId) + qty > maxOwn) return false;
+
+    this.cash -= totalCost;
+
+    // Track spending by category
+    const c = item.category;
+    if (c === 'Nemovitost')        this.spent.realEstate += totalCost;
+    else if (c === 'Akcie & ETF')  this.spent.stocks     += totalCost;
+    else if (c === 'Dluhopisy')    this.spent.bonds      += totalCost;
+    else if (c === 'Podnikání')    this.spent.business   += totalCost;
+    else if (c === 'Spoření')      this.spent.savings    += totalCost;
+    else if (c === 'Spekulace')    this.spent.speculation += totalCost;
+    else if (c === 'Komodity')     this.spent.commodity  += totalCost;
+    else if (c === 'Životní styl') this.spent.lifestyle  += totalCost;
+
+    const existing = this.portfolio.find(p => p.item.id === itemId);
+    if (existing) {
+      // Weighted average cost basis
+      const newAvg = (existing.avgCost * existing.qty + unitPrice * qty) / (existing.qty + qty);
+      existing.qty += qty;
+      existing.avgCost = newAvg;
+      // For stock-like assets, currentValue mirrors marketPrice
+      if (item.stockGrowth) existing.currentValue = unitPrice;
+    } else {
+      const entry = {
+        item,
+        qty,
+        currentValue: unitPrice,
+        avgCost: unitPrice,
+        roundsRemaining: item.isBond ? item.bondMaturityRounds : undefined,
+        resolvedRisk: false
+      };
+      this.portfolio.push(entry);
+    }
+    return true;
+  },
+
+  sellAsset(itemId) {
+    const idx = this.portfolio.findIndex(p => p.item.id === itemId);
+    if (idx === -1) return false;
+    const entry = this.portfolio[idx];
+    if (!entry.item.canSell) return false;
+    const saleValue = entry.currentValue * entry.qty;
+    this.cash += saleValue;
+    this.portfolio.splice(idx, 1);
+    return saleValue;
+  },
+
+  resolveRound() {
+    const result = {
+      rentalIncome: 0,
+      dividendIncome: 0,
+      bondsPaid: 0,
+      maintenanceCost: 0,
+      livingExpenses: 0,
+      appreciationGain: 0,
+      stockChange: 0,
+      riskWon: 0,
+      riskLost: 0,
+      riskEvents: [],
+      marketEvent: null
+    };
+
+    // STEP 0 — Living expenses (6 months × 1000 €)
+    const LIVING_COST = 6000;
+    this.cash -= LIVING_COST;
+    this.livingExpensesPaid += LIVING_COST;
+    result.livingExpenses = LIVING_COST;
+
+    // STEP 2 — Income & maintenance
+    this.portfolio.forEach(p => {
+      const inc = (p.item.monthlyIncome || 0) * 6 * p.qty;
+      const maint = (p.item.monthlyMaintenance || 0) * 6 * p.qty;
+      this.cash += inc;
+      this.cash -= maint;
+      if (p.item.category === 'Nemovitost' || p.item.category === 'Podnikání') {
+        result.rentalIncome += inc;
+      } else {
+        result.dividendIncome += inc;
+      }
+      result.maintenanceCost += maint;
+    });
+
+    // STEP 3a — Fluctuate market prices for ALL volatile assets (owned or not)
+    this.fluctuateMarkets();
+
+    // STEP 3b — Random market-wide event (10% chance)
+    if (Math.random() < 0.10) {
+      const events = [
+        { name: 'Akciový propad — krize důvěry', factor: 0.78, scope: 'Akcie & ETF', icon: '📉' },
+        { name: 'Krypto bublina splaskla', factor: 0.55, scope: 'Spekulace', icon: '💥' },
+        { name: 'Inflační šok — komodity nahoru', factor: 1.22, scope: 'Komodity', icon: '🔥' },
+        { name: 'Tech rally — AI boom', factor: 1.18, scope: 'Akcie & ETF', icon: '🚀' },
+        { name: 'Geopolitická krize — ropa raketa', factor: 1.30, scope: 'Komodity', icon: '⚡' },
+        { name: 'Recese — širší propad trhu', factor: 0.85, scope: 'all', icon: '🌧' }
+      ];
+      const ev = events[Math.floor(Math.random() * events.length)];
+      result.marketEvent = ev;
+      ASSETS.forEach(a => {
+        if (!a.stockGrowth) return;
+        if (ev.scope !== 'all' && a.category !== ev.scope) return;
+        const cur = this.marketPrices[a.id];
+        this.marketPrices[a.id] = Math.max(cur * ev.factor, a.cost * 0.05);
+        this.priceHistory[a.id][this.priceHistory[a.id].length - 1] = this.marketPrices[a.id];
+      });
+    }
+
+    // STEP 3c — Apply changes to portfolio entries
+    this.portfolio.forEach(p => {
+      if (p.item.appreciates) {
+        const oldVal = p.currentValue;
+        p.currentValue = p.currentValue * 1.015;
+        result.appreciationGain += (p.currentValue - oldVal) * p.qty;
+      }
+      if (p.item.stockGrowth) {
+        const oldVal = p.currentValue;
+        p.currentValue = this.marketPrices[p.item.id];
+        result.stockChange += (p.currentValue - oldVal) * p.qty;
+      }
+      if (p.item.isRisky && !p.resolvedRisk) {
+        p.resolvedRisk = true;
+        const failed = Math.random() < p.item.riskFailChance;
+        if (failed) {
+          const lost = p.item.cost * p.qty;
+          p.currentValue = 0;
+          result.riskLost += lost;
+          this.totalLossesFromRisk += lost;
+          result.riskEvents.push({ name: p.item.name, success: false, amount: lost });
+        } else {
+          const newVal = p.item.cost * p.item.riskMultiplier;
+          const gain = (newVal - p.item.cost) * p.qty;
+          p.currentValue = newVal;
+          result.riskWon += gain;
+          this.totalGainsFromRisk += gain;
+          result.riskEvents.push({ name: p.item.name, success: true, amount: gain });
+        }
+      }
+    });
+
+    // STEP 4 — Bonds
+    this.portfolio.forEach(p => {
+      if (p.item.isBond && p.roundsRemaining !== undefined) {
+        p.roundsRemaining--;
+        if (p.roundsRemaining <= 0) {
+          const payout = p.item.bondReturn * p.qty;
+          this.cash += payout;
+          result.bondsPaid += payout;
+        }
+      }
+    });
+    // Remove matured bonds
+    this.portfolio = this.portfolio.filter(p => {
+      if (p.item.isBond) return p.roundsRemaining === undefined || p.roundsRemaining > 0;
+      return true;
+    });
+
+    this.history.push({ round: this.round, ...result });
+    this.round++;
+    return result;
+  },
+
+  evaluateSurvival() {
+    const net = this.netMonthlyFlow;
+    if (net >= 6000) return 'svoboda';
+    if (net >= 3500) return 'nezavislost';
+    if (net >= 2000) return 'hrana';
+    return 'nestaci';
+  },
+
+  // Classify the player based on spending behavior + portfolio composition
+  classifyPlayer() {
+    const s = this.spent;
+    const totalSpent = s.realEstate + s.stocks + s.bonds + s.business
+                     + s.savings + s.speculation + s.lifestyle;
+    if (totalSpent === 0) return 'setric';
+
+    const investmentSpend  = s.realEstate + s.stocks + s.business;
+    const safeSpend        = s.bonds + s.savings;
+    const lifestyleSpend   = s.lifestyle;
+    const speculationSpend = s.speculation;
+
+    const lifestylePct   = lifestyleSpend / totalSpent;
+    const investmentPct  = investmentSpend / totalSpent;
+    const safePct        = safeSpend / totalSpent;
+    const remainingCashPct = this.cash / 1200000;
+
+    if (lifestylePct > 0.18) return 'spotrebitel';
+    if (safePct > 0.45 || remainingCashPct > 0.45) return 'setric';
+    if (investmentPct + speculationSpend / totalSpent > 0.55) return 'investor';
+    if (investmentPct > 0.35) return 'investor';
+    return 'setric';
+  },
+
+  reset() {
+    this.cash = 1200000;
+    this.round = 1;
+    this.portfolio = [];
+    this.purchasesThisRound = [];
+    this.history = [];
+    this.spent = { realEstate:0, stocks:0, bonds:0, business:0, savings:0, speculation:0, lifestyle:0, commodity:0 };
+    this.totalLossesFromRisk = 0;
+    this.totalGainsFromRisk = 0;
+    this.livingExpensesPaid = 0;
+    // Init market prices for all tradable volatile assets
+    this.marketPrices = {};
+    this.priceHistory = {};
+    ASSETS.forEach(a => {
+      if (a.stockGrowth) {
+        this.marketPrices[a.id] = a.cost;
+        this.priceHistory[a.id] = [a.cost];
+      }
+    });
+  },
+
+  // Get current purchase price for an asset (accounts for market fluctuation)
+  currentPrice(itemId) {
+    if (this.marketPrices[itemId] !== undefined) {
+      return Math.round(this.marketPrices[itemId]);
+    }
+    return ASSET_MAP[itemId].cost;
+  },
+
+  // Fluctuate one round of market prices for ALL stock-like assets
+  // Including those not yet owned by player
+  fluctuateMarkets() {
+    ASSETS.forEach(a => {
+      if (!a.stockGrowth) return;
+      const cur = this.marketPrices[a.id];
+      let change = (Math.random() - 0.50) * a.volatility * 2 + a.trendGrowth;
+      // Random extreme events ~6% chance: ±25% extra swing
+      if (Math.random() < 0.06) {
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        change += dir * (0.15 + Math.random() * 0.15);
+      }
+      const floor = a.cost * 0.05;
+      const newPrice = Math.max(cur * (1 + change), floor);
+      this.marketPrices[a.id] = newPrice;
+      this.priceHistory[a.id].push(newPrice);
+    });
+  }
+};
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+function buildSparkline(history, isUp) {
+  if (!history || history.length < 2) return '';
+  const w = 100, h = 28;
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const range = max - min || 1;
+  const pts = history.map((v, i) => {
+    const x = (i / (history.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const stroke = isUp ? '#22C55E' : '#EF4444';
+  const fillStroke = isUp ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)';
+  const lastX = w, lastY = h - ((history[history.length-1] - min) / range) * h;
+  return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <polygon points="${pts} ${w.toFixed(1)},${h} 0,${h}" fill="${fillStroke}"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.2" fill="${stroke}"/>
+  </svg>`;
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('cs-CZ', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+function formatNum(n) {
+  return new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 0 }).format(n);
+}
+
+function animateNumber(el, finalValue, duration = 1500) {
+  const start = performance.now();
+  const update = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = formatCurrency(Math.round(finalValue * eased));
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+function getCategoryClass(cat) {
+  if (cat === 'Nemovitost') return 'cat-real-estate';
+  if (cat === 'Akcie & ETF') return 'cat-stocks';
+  if (cat === 'Dluhopisy')   return 'cat-bonds';
+  if (cat === 'Podnikání')   return 'cat-business';
+  if (cat === 'Spoření')     return 'cat-savings';
+  if (cat === 'Spekulace')   return 'cat-speculation';
+  if (cat === 'Komodity')    return 'cat-commodity';
+  return 'cat-lifestyle';
+}
+
+function showNotification(msg) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  target.style.display = 'block';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => target.classList.add('active'));
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   PURCHASES THIS ROUND (temp state)
+═══════════════════════════════════════════════ */
+let pendingPurchases = {}; // itemId -> qty
+
+function getPendingQty(itemId) {
+  return pendingPurchases[itemId] || 0;
+}
+
+function getPendingCost() {
+  return Object.entries(pendingPurchases).reduce((sum, [id, qty]) => {
+    return sum + (GameState.currentPrice(id) * qty);
+  }, 0);
+}
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD UPDATE
+═══════════════════════════════════════════════ */
+function updateDashboard() {
+  const spent = getPendingCost();
+  const displayCash = GameState.cash - spent;
+  const inc = GameState.monthlyIncome;
+  const expAssets = GameState.monthlyExpenses;
+  const expTotal = expAssets + 1000; // + living cost 1000 €/m
+  const net = inc - expTotal;
+
+  document.getElementById('dash-cash').textContent = formatCurrency(displayCash);
+  document.getElementById('dash-nw').textContent = formatCurrency(GameState.netWorth);
+  document.getElementById('dash-income').textContent = '+' + formatCurrency(inc);
+  document.getElementById('dash-expense').textContent = '−' + formatCurrency(expTotal);
+  const netEl = document.getElementById('dash-net');
+  netEl.textContent = (net >= 0 ? '+' : '') + formatCurrency(net);
+  netEl.style.color = net >= 3500 ? 'var(--green)' : net >= 0 ? 'var(--gold)' : 'var(--red)';
+
+  const r = GameState.round;
+  document.getElementById('dash-round').textContent = String(r).padStart(2,'0') + ' / 10';
+  const bar = document.getElementById('progress-bar');
+  bar.style.width = ((r-1) / 10 * 100) + '%';
+  bar.setAttribute('aria-valuenow', r);
+
+  const remEl = document.getElementById('remaining-cash');
+  const costEl = document.getElementById('selected-cost');
+  remEl.textContent = formatCurrency(displayCash);
+  costEl.textContent = formatCurrency(spent);
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER MARKET BOARD
+═══════════════════════════════════════════════ */
+function renderMarket() {
+  const r = GameState.round;
+  const ids = ROUND_BOARDS[r - 1];
+  const grid = document.getElementById('market-grid');
+  grid.innerHTML = '';
+  document.getElementById('market-round-num').textContent = r;
+
+  ids.forEach(id => {
+    const item = ASSET_MAP[id];
+    const ownedQty = GameState.getOwnedQty(id);
+    const pendQty = getPendingQty(id);
+    const maxQ = item.maxQuantity || 1;
+    const atMax = (ownedQty + pendQty) >= maxQ;
+    const currentPrice = GameState.currentPrice(id);
+    const canAfford = (GameState.cash - getPendingCost()) >= currentPrice;
+
+    const card = document.createElement('div');
+    card.className = 'asset-card' +
+      (pendQty > 0 ? ' selected' : '') +
+      (atMax ? ' disabled' : (!canAfford && pendQty === 0 ? ' cant-afford' : ''));
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('tabindex', atMax ? '-1' : '0');
+    card.setAttribute('aria-label', item.name + ' — ' + formatCurrency(currentPrice));
+
+    const incomeStr = item.monthlyIncome
+      ? `<span class="metric metric-green">+${formatNum(item.monthlyIncome)} €/m</span>`
+      : '';
+    const maintStr = item.monthlyMaintenance
+      ? `<span class="metric metric-red">−${formatNum(item.monthlyMaintenance)} €/m</span>`
+      : '';
+    const bondStr = item.isBond
+      ? `<span class="metric metric-amber">→ ${formatNum(item.bondReturn)} € za ${item.bondMaturityRounds} kola</span>`
+      : '';
+    const stockStr = item.stockGrowth
+      ? `<span class="metric metric-blue">Volatilita ${(item.volatility*100).toFixed(0)}%</span>`
+      : '';
+    const riskStr = item.isRisky
+      ? `<span class="metric metric-amber">Riziko: ${(item.riskFailChance*100).toFixed(0)}%</span>`
+      : '';
+    const liabStr = '';
+
+    const showQtyCtrl = !item.isLiability && !item.isBond && maxQ > 1 && pendQty > 0;
+
+    // Price change vs original cost (for tradable volatile assets)
+    let priceChangeHTML = '';
+    let sparklineHTML = '';
+    if (item.stockGrowth && GameState.priceHistory[id]) {
+      const history = GameState.priceHistory[id];
+      const pct = ((currentPrice - item.cost) / item.cost) * 100;
+      const cls = pct >= 0 ? 'price-up' : 'price-down';
+      const arrow = pct >= 0 ? '▲' : '▼';
+      priceChangeHTML = `<div class="price-change ${cls}">${arrow} ${Math.abs(pct).toFixed(1)} %</div>`;
+      sparklineHTML = `<div class="sparkline-wrap">${buildSparkline(history, pct >= 0)}</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="selected-check" aria-hidden="true">✓</div>
+      <div class="asset-card-top">
+        <span class="asset-emoji" aria-hidden="true">${item.emoji}</span>
+        <div class="asset-info">
+          <div class="asset-name">${item.name}</div>
+          <span class="asset-cat-badge ${getCategoryClass(item.category)}">${item.category}</span>
+        </div>
+        <div class="asset-price">
+          <div class="asset-cost">${formatCurrency(currentPrice)}</div>
+          ${priceChangeHTML}
+        </div>
+      </div>
+      ${sparklineHTML}
+      <p class="asset-desc">${item.description}</p>
+      <div class="asset-metrics">
+        ${incomeStr}${maintStr}${bondStr}${stockStr}${riskStr}
+        ${atMax ? '<span class="metric" style="color:var(--text-muted)">Maximální počet</span>' : ''}
+      </div>
+      ${maxQ > 1 && !item.isLiability ? `
+      <div class="asset-qty-ctrl">
+        <button class="qty-btn" data-id="${id}" data-action="minus" aria-label="Ubrat 1" ${pendQty===0?'disabled':''}>−</button>
+        <span class="qty-display">${pendQty}</span>
+        <button class="qty-btn" data-id="${id}" data-action="plus" aria-label="Přidat 1" ${atMax||(!canAfford&&pendQty===0)?'disabled':''}>+</button>
+        ${pendQty>0?`<span class="qty-cost">${formatCurrency(currentPrice*pendQty)}</span>`:''}
+      </div>` : ''}
+    `;
+
+    if (!atMax) {
+      card.addEventListener('click', e => {
+        if (e.target.closest('.qty-btn')) return;
+        handleCardClick(id, item, card);
+      });
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick(id, item, card);
+        }
+      });
+    }
+
+    grid.appendChild(card);
+  });
+
+  // Qty button events
+  grid.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const item = ASSET_MAP[id];
+      const ownedQty = GameState.getOwnedQty(id);
+      const cur = getPendingQty(id);
+      const maxQ = item.maxQuantity || 1;
+
+      if (action === 'plus') {
+        const extraCost = GameState.currentPrice(id);
+        if ((ownedQty + cur) < maxQ && (GameState.cash - getPendingCost()) >= extraCost) {
+          pendingPurchases[id] = (pendingPurchases[id] || 0) + 1;
+        } else {
+          showNotification('Nedostatek hotovosti nebo maximální počet.');
+        }
+      } else {
+        if (cur > 0) {
+          pendingPurchases[id]--;
+          if (pendingPurchases[id] === 0) delete pendingPurchases[id];
+        }
+      }
+      renderMarket();
+      renderPortfolio();
+      updateDashboard();
+    });
+  });
+}
+
+function handleCardClick(id, item, card) {
+  const ownedQty = GameState.getOwnedQty(id);
+  const maxQ = item.maxQuantity || 1;
+  const curPend = getPendingQty(id);
+
+  if (curPend > 0) {
+    delete pendingPurchases[id];
+  } else {
+    const price = GameState.currentPrice(id);
+    const affordCheck = (GameState.cash - getPendingCost()) >= price;
+    if (!affordCheck) { showNotification('Nedostatek hotovosti.'); return; }
+    if (ownedQty >= maxQ) { showNotification('Maximální počet dosažen.'); return; }
+    pendingPurchases[id] = 1;
+  }
+  renderMarket();
+  renderPortfolio();
+  updateDashboard();
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER PORTFOLIO
+═══════════════════════════════════════════════ */
+function renderPortfolio() {
+  const list = document.getElementById('portfolio-list');
+  list.innerHTML = '';
+
+  if (GameState.portfolio.length === 0) {
+    list.innerHTML = '<div class="empty-portfolio"><div class="emp-icon">📭</div><div class="emp-msg">Zatím žádná aktiva. Začni nakupovat na tržišti výše.</div></div>';
+    return;
+  }
+
+  GameState.portfolio.forEach(entry => {
+    const item = entry.item;
+    const div = document.createElement('div');
+    div.className = 'portfolio-item';
+    div.setAttribute('role', 'listitem');
+
+    const totalVal = entry.currentValue * entry.qty;
+    const monthlyNet = ((item.monthlyIncome || 0) - (item.monthlyMaintenance || 0)) * entry.qty;
+    const bondInfo = item.isBond ? ` · Splatnost za ${entry.roundsRemaining} kol` : '';
+
+    div.innerHTML = `
+      <span class="pi-emoji" aria-hidden="true">${item.emoji}</span>
+      <div class="pi-info">
+        <div class="pi-name">${item.name}${entry.qty > 1 ? ` ×${entry.qty}` : ''}</div>
+        <div class="pi-details">${item.category}${bondInfo}</div>
+      </div>
+      <div>
+        ${!item.isLiability ? `<div class="pi-value">${formatCurrency(totalVal)}</div>` : ''}
+        ${monthlyNet !== 0 ? `<div class="pi-income" style="color:${monthlyNet>=0?'var(--green)':'var(--red)'}">${monthlyNet>=0?'+':''}${formatCurrency(monthlyNet)}/m</div>` : ''}
+      </div>
+      ${item.canSell ? `<button class="btn-sell" data-id="${item.id}" aria-label="Prodat ${item.name}">Prodat</button>` : ''}
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('.btn-sell').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const sold = GameState.sellAsset(id);
+      if (sold !== false) {
+        showNotification(`Prodáno za ${formatCurrency(sold)}`);
+        renderMarket();
+        renderPortfolio();
+        updateDashboard();
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   ROUND SUMMARY OVERLAY
+═══════════════════════════════════════════════ */
+function showRoundSummary(result, onNext) {
+  const overlay = document.getElementById('overlay-summary');
+  const linesEl = document.getElementById('summary-lines');
+  const titleEl = document.getElementById('summary-title');
+
+  const prevRound = GameState.round - 1;
+  titleEl.textContent = `Souhrn kola ${prevRound}`;
+  linesEl.innerHTML = '';
+
+  const lines = [];
+  if (result.rentalIncome > 0)    lines.push({ label: '💰 Příjmy z pronájmu / podnikání', val: '+' + formatCurrency(result.rentalIncome), cls: 'sl-pos' });
+  if (result.dividendIncome > 0)  lines.push({ label: '💎 Dividendy a spoření', val: '+' + formatCurrency(result.dividendIncome), cls: 'sl-pos' });
+  if (result.maintenanceCost > 0) lines.push({ label: '🔻 Náklady na majetek (údržba)', val: '−' + formatCurrency(result.maintenanceCost), cls: 'sl-neg' });
+  if (result.livingExpenses > 0)  lines.push({ label: '🏡 Životní náklady (1 000 €/měsíc × 6)', val: '−' + formatCurrency(result.livingExpenses), cls: 'sl-neg' });
+  if (result.bondsPaid > 0)       lines.push({ label: '📜 Dluhopisy splaceny', val: '+' + formatCurrency(result.bondsPaid), cls: 'sl-pos' });
+  if (result.appreciationGain > 0) lines.push({ label: '🏠 Zhodnocení nemovitostí (+1,5 %)', val: '+' + formatCurrency(result.appreciationGain), cls: 'sl-pos' });
+  if (result.marketEvent) {
+    const ev = result.marketEvent;
+    const isUp = ev.factor >= 1;
+    lines.push({
+      label: `${ev.icon} ${ev.name}`,
+      val: (isUp ? '+' : '−') + Math.abs((ev.factor - 1) * 100).toFixed(0) + ' %',
+      cls: isUp ? 'sl-pos' : 'sl-neg'
+    });
+  }
+  if (result.stockChange !== 0) {
+    const sign = result.stockChange >= 0 ? '+' : '−';
+    lines.push({
+      label: '📈 Pohyb akciových trhů',
+      val: sign + formatCurrency(Math.abs(result.stockChange)),
+      cls: result.stockChange >= 0 ? 'sl-pos' : 'sl-neg'
+    });
+  }
+  if (result.riskEvents && result.riskEvents.length > 0) {
+    result.riskEvents.forEach(ev => {
+      if (ev.success) {
+        lines.push({ label: `🚀 ${ev.name} — ÚSPĚCH!`, val: '+' + formatCurrency(ev.amount), cls: 'sl-pos' });
+      } else {
+        lines.push({ label: `💥 ${ev.name} — zkrachoval`, val: '−' + formatCurrency(ev.amount), cls: 'sl-neg' });
+      }
+    });
+  }
+  lines.push({ label: '📊 Čistý majetek', val: formatCurrency(GameState.netWorth), cls: 'sl-gold', isTotal: true });
+
+  lines.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'summary-line' + (l.isTotal ? ' total' : '');
+    div.innerHTML = `<span class="sl-label">${l.label}</span><span class="sl-val ${l.cls}">${l.val}</span>`;
+    linesEl.appendChild(div);
+  });
+
+  overlay.classList.add('visible');
+
+  // Animate lines
+  const lineEls = linesEl.querySelectorAll('.summary-line');
+  lineEls.forEach((el, i) => {
+    setTimeout(() => el.classList.add('show'), 150 + i * 200);
+  });
+
+  const nextBtn = document.getElementById('btn-next-round');
+  nextBtn.onclick = () => {
+    overlay.classList.remove('visible');
+    lineEls.forEach(el => el.classList.remove('show'));
+    onNext();
+  };
+
+  // Auto-advance if no interaction after 6s
+  const timer = setTimeout(() => {
+    if (overlay.classList.contains('visible')) nextBtn.click();
+  }, 6000);
+  nextBtn.addEventListener('click', () => clearTimeout(timer), { once: true });
+}
+
+/* ═══════════════════════════════════════════════
+   CONFIRM ROUND
+═══════════════════════════════════════════════ */
+function confirmRound() {
+  // Execute purchases
+  Object.entries(pendingPurchases).forEach(([id, qty]) => {
+    GameState.buyItem(id, qty);
+  });
+  pendingPurchases = {};
+
+  const result = GameState.resolveRound();
+
+  if (GameState.round > 10) {
+    showRoundSummary(result, showResultScreen);
+  } else {
+    showRoundSummary(result, () => {
+      startRound();
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   START ROUND
+═══════════════════════════════════════════════ */
+const ROUND_TITLES = [
+  'Začínáš s prázdným portfoliem',
+  'Buduj základ příjmu',
+  'Diverzifikuj svá aktiva',
+  'Hledej rovnováhu',
+  'Polovina cesty za tebou',
+  'Reinvestuj a rozšiř',
+  'Riskuj jen s tím, co ti zbylo',
+  'Stabilizuj svůj cash flow',
+  'Předposlední krok',
+  'Finále — připrav se na výsledek'
+];
+
+function renderTicker() {
+  const container = document.getElementById('market-ticker');
+  if (!container) return;
+  // Show all tradable volatile assets
+  const tickerAssets = ASSETS.filter(a => a.stockGrowth);
+  container.innerHTML = tickerAssets.map(a => {
+    const price = GameState.currentPrice(a.id);
+    const history = GameState.priceHistory[a.id] || [a.cost];
+    const pct = ((price - a.cost) / a.cost) * 100;
+    const cls = pct >= 0 ? 'up' : 'down';
+    const arrow = pct >= 0 ? '▲' : '▼';
+    const spark = buildSparkline(history, pct >= 0);
+    return `<div class="ticker-item" title="${a.name}: ${formatCurrency(price)}">
+      <div class="ti-top">
+        <span class="ti-name">${a.name.split(' — ')[0].split(' & ')[0]}</span>
+        <span class="ti-emoji" aria-hidden="true">${a.emoji}</span>
+      </div>
+      <div class="ti-price">${formatCurrency(price)}</div>
+      <div class="ti-change ${cls}">${arrow} ${Math.abs(pct).toFixed(1)} %</div>
+      <div class="ti-spark">${spark}</div>
+    </div>`;
+  }).join('');
+}
+
+function startRound() {
+  pendingPurchases = {};
+  const r = GameState.round;
+  document.getElementById('round-badge').textContent = `Kolo ${r} z 10`;
+  document.getElementById('round-title').textContent = ROUND_TITLES[r-1];
+  document.getElementById('round-quote').textContent = `„${QUOTES[r-1]}"`;
+  renderTicker();
+  renderMarket();
+  renderPortfolio();
+  updateDashboard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════
+   RESULT SCREEN
+═══════════════════════════════════════════════ */
+function showResultScreen() {
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('action-bar').classList.add('hidden');
+  showScreen('screen-result');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Compute breakdown
+  const cash = GameState.cash;
+  let realEstateVal = 0, stocksVal = 0, bondsVal = 0, otherVal = 0;
+  GameState.portfolio.forEach(p => {
+    if (p.item.isLiability) return;
+    const tv = p.currentValue * p.qty;
+    if (p.item.category === 'Nemovitost') realEstateVal += tv;
+    else if (p.item.category === 'Akcie & ETF') stocksVal += tv;
+    else if (p.item.category === 'Dluhopisy') bondsVal += tv;
+    else otherVal += tv;
+  });
+  const nw = GameState.netWorth;
+  const inc = GameState.monthlyIncome;
+  const expAssets = GameState.monthlyExpenses;
+  const livingMonthly = 1000;
+  const exp = expAssets + livingMonthly;
+  const net = inc - exp;
+  const verdict = (function(){
+    if (net >= 6000) return 'svoboda';
+    if (net >= 3500) return 'nezavislost';
+    if (net >= 2000) return 'hrana';
+    return 'nestaci';
+  })();
+
+  // Animate numbers
+  setTimeout(() => {
+    animateNumber(document.getElementById('r-cash'), cash);
+    animateNumber(document.getElementById('r-real-estate'), realEstateVal);
+    animateNumber(document.getElementById('r-stocks'), stocksVal);
+    animateNumber(document.getElementById('r-bonds'), bondsVal);
+    animateNumber(document.getElementById('r-other'), otherVal);
+    animateNumber(document.getElementById('r-nw'), nw);
+    animateNumber(document.getElementById('r-inc'), inc);
+    animateNumber(document.getElementById('r-exp'), exp);
+    animateNumber(document.getElementById('r-net'), net);
+  }, 300);
+
+  // Cashflow color
+  const netEl = document.getElementById('r-net');
+  netEl.style.color = net >= 3500 ? 'var(--green)' : net >= 2000 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('r-exp').textContent = '−' + formatCurrency(expAssets);
+  document.getElementById('r-life').textContent = '−' + formatCurrency(livingMonthly);
+
+  // Verdict
+  const verdictData = {
+    svoboda:      { icon: '🏆', title: 'FINANČNÍ SVOBODA',       desc: 'Peníze pracují za tebe. Nepotřebuješ zaměstnání.', cls: 'svoboda' },
+    nezavislost:  { icon: '✅', title: 'FINANČNĚ NEZÁVISLÝ/Á',   desc: 'Komfortní život bez zaměstnání.', cls: 'nezavis' },
+    hrana:        { icon: '⚠️', title: 'NA HRANĚ PŘEŽITÍ',       desc: 'Přežiješ, ale bez rezervy.', cls: 'hrana' },
+    nestaci:      { icon: '❌', title: 'NESTAČÍ TO',              desc: `Za ${Math.floor(cash / Math.max(-net, 1))} měsíců vyčerpáš úspory.`, cls: 'nestaci' }
+  };
+  const vd = verdictData[verdict];
+  const badge = document.getElementById('verdict-badge');
+  badge.className = 'verdict-badge ' + vd.cls;
+  document.getElementById('verdict-icon').textContent = vd.icon;
+  document.getElementById('verdict-title').textContent = vd.title;
+  document.getElementById('verdict-desc').textContent = vd.desc;
+
+  // Player Type classification + Kiyosaki message
+  const playerType = GameState.classifyPlayer();
+  const typeData = {
+    investor: {
+      icon: '🧠',
+      title: 'INVESTOR',
+      desc: 'Tvé peníze pracují za tebe. Většinu kapitálu jsi nasměroval/a do aktiv — nemovitostí, akcií a podnikání. Pochopil/a jsi rozdíl mezi tím, co peníze přináší a co je bere.',
+      quote: 'Bohatý táta by byl na tebe hrdý. „Bohatí nepracují pro peníze — peníze pracují pro ně."',
+      cls: 'investor'
+    },
+    setric: {
+      icon: '🏦',
+      title: 'ŠETŘIČ',
+      desc: 'Hraješ na jistotu. Tvůj kapitál sedí v hotovosti, dluhopisech a spoření. Je to bezpečné — ale inflace tě každý rok okrádá o reálnou hodnotu. Bez rizika není žádné velké zhodnocení.',
+      quote: 'Bohatý táta by řekl: „Bezpečí je iluze. Skutečné riziko je nedělat nic." Investuj do aktiv, ne jen do banky.',
+      cls: 'setric'
+    },
+    spotrebitel: {
+      icon: '💸',
+      title: 'SPOTŘEBITEL',
+      desc: 'Utratil/a jsi velkou část kapitálu za luxus, který ti bere peníze každý měsíc. Auto, hodinky, dovolené — všechno hezké, ale nic z toho ti negeneruje příjem. Bohatý táta by smutně pokýval hlavou.',
+      quote: 'Bohatý táta varuje: „Chudí kupují pasiva. Bohatí kupují aktiva." Investuj do aktiv, ne do pasiv — pasiva tě nakonec udělají chudým.',
+      cls: 'spotrebitel'
+    }
+  };
+  const td = typeData[playerType];
+  const ptCard = document.getElementById('player-type-card');
+  ptCard.className = 'player-type-card ' + td.cls;
+  document.getElementById('pt-bg-icon').textContent = td.icon;
+  document.getElementById('pt-title').textContent = td.title;
+  document.getElementById('pt-desc').textContent = td.desc;
+  document.getElementById('pt-quote').textContent = '„' + td.quote + '"';
+
+  // Pie chart
+  renderPieChart({ cash, realEstateVal, stocksVal, bondsVal, otherVal, nw });
+
+  // AI analysis
+  callAI({ cash, realEstateVal, stocksVal, bondsVal, otherVal, nw, inc, exp, net, verdict });
+}
+
+/* ═══════════════════════════════════════════════
+   PIE CHART
+═══════════════════════════════════════════════ */
+function renderPieChart({ cash, realEstateVal, stocksVal, bondsVal, otherVal, nw }) {
+  const cats = [
+    { label: 'Hotovost',     val: cash,          color: '#8888A8' },
+    { label: 'Nemovitosti',  val: realEstateVal,  color: '#3B82F6' },
+    { label: 'Akcie & ETF',  val: stocksVal,      color: '#22C55E' },
+    { label: 'Dluhopisy',    val: bondsVal,        color: '#F59E0B' },
+    { label: 'Ostatní',      val: otherVal,        color: '#8B5CF6' }
+  ].filter(c => c.val > 0);
+
+  const total = cats.reduce((s, c) => s + c.val, 0) || 1;
+  let cumulativePct = 0;
+  const segments = cats.map(c => {
+    const pct = c.val / total * 100;
+    const seg = { ...c, start: cumulativePct, pct };
+    cumulativePct += pct;
+    return seg;
+  });
+
+  const gradientParts = segments.map(s => `${s.color} ${s.start.toFixed(1)}% ${(s.start+s.pct).toFixed(1)}%`).join(', ');
+  const pie = document.getElementById('pie-chart');
+  pie.style.background = segments.length > 0
+    ? `conic-gradient(${gradientParts})`
+    : 'var(--glass-border)';
+
+  const legend = document.getElementById('pie-legend');
+  legend.innerHTML = segments.map(s =>
+    `<div class="pie-leg-item">
+      <div class="pie-dot" style="background:${s.color}"></div>
+      <span style="color:var(--text-secondary)">${s.label}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;margin-left:8px;color:var(--text-primary)">${s.pct.toFixed(1)}%</span>
+    </div>`
+  ).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   AI ANALYSIS
+═══════════════════════════════════════════════ */
+async function callAI({ cash, realEstateVal, stocksVal, bondsVal, otherVal, nw, inc, exp, net, verdict }) {
+  const loader = document.getElementById('ai-loader');
+  const textEl = document.getElementById('ai-text');
+  loader.style.display = 'flex';
+  textEl.textContent = '';
+
+  const assetNames = GameState.portfolio
+    .filter(p => !p.item.isLiability)
+    .map(p => `${p.item.name} ×${p.qty}`);
+  const liabilityNames = GameState.portfolio
+    .filter(p => p.item.isLiability)
+    .map(p => `${p.item.name} ×${p.qty}`);
+
+  const verdictLabels = {
+    svoboda: 'FINANČNÍ SVOBODA (6 000+ €/měsíc)',
+    nezavislost: 'FINANČNĚ NEZÁVISLÝ/Á (3 500+ €/měsíc)',
+    hrana: 'NA HRANĚ PŘEŽITÍ (2 000–3 499 €/měsíc)',
+    nestaci: 'NESTAČÍ TO (pod 2 000 €/měsíc)'
+  };
+
+  const playerType = GameState.classifyPlayer();
+  const typeLabels = { investor: 'Investor', setric: 'Šetřič', spotrebitel: 'Spotřebitel' };
+  const totalLiving = GameState.livingExpensesPaid;
+  const riskLost = GameState.totalLossesFromRisk;
+  const riskGain = GameState.totalGainsFromRisk;
+
+  const userPrompt = `Hráč dokončil 10kolovou finanční simulaci (5 let).
+
+Začínal s: 1 200 000 €
+Výsledný čistý majetek: ${nw.toLocaleString('cs-CZ')} €
+Čistý měsíční příjem po životních nákladech: ${net} €/měsíc
+Hotovost: ${cash.toLocaleString('cs-CZ')} €
+Životní náklady zaplaceno celkem: ${totalLiving.toLocaleString('cs-CZ')} €
+Aktiva v portfoliu: ${assetNames.join(', ') || 'žádná'}
+Pasiva (zbytečné výdaje): ${liabilityNames.join(', ') || 'žádná'}
+Ztráty z rizikových investic: ${riskLost.toLocaleString('cs-CZ')} €
+Zisky z rizikových investic: ${riskGain.toLocaleString('cs-CZ')} €
+Typ investora: ${typeLabels[playerType]}
+Verdikt: ${verdictLabels[verdict]}
+
+Napiš analýzu v této přesné struktuře — bez nadpisů, bez odrážek:
+
+Odstavec 1 (3–4 věty): Celkové hodnocení. Byl hráč strategický? Co udělal dobře?
+Odstavec 2 (2–3 věty): Klíčová rozhodnutí. Co nejvíc ovlivnilo výsledek — pozitivně i negativně?
+Odstavec 3 (2 věty): Co šlo lépe. Jedna konkrétní věc, která by výrazně změnila výsledek.
+Odstavec 4 (2 věty): Životní realita. Co by tento portfolio plán znamenal v reálném životě?
+Odstavec 5 (1 věta): Silná, unikátní motivační věta. Každou hru JINÁ formulace — nikdy neopakuj.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'YOUR_API_KEY_HERE',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'Jsi finanční analytik a kouč inspirovaný filozofií Roberta Kiyosakiho. Píšeš vždy česky. Jsi přímý, konkrétní a motivující. Žádný markdown, žádné hvězdičky. Čistý text rozdělený prázdnými řádky.',
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const data = await response.json();
+    const text = data.content[0].text;
+    loader.style.display = 'none';
+    typewriteParagraphs(textEl, text);
+
+  } catch (e) {
+    loader.style.display = 'none';
+    const fallback = FALLBACK_RESULTS[verdict];
+    typewriteParagraphs(textEl, fallback);
+  }
+}
+
+function typewriteParagraphs(el, text) {
+  const paragraphs = text.split('\n\n').filter(p => p.trim());
+  el.innerHTML = '';
+  let pIdx = 0;
+
+  function writeParagraph() {
+    if (pIdx >= paragraphs.length) return;
+    const p = document.createElement('p');
+    el.appendChild(p);
+    const content = paragraphs[pIdx];
+    pIdx++;
+    let i = 0;
+    const tick = () => {
+      if (i < content.length) {
+        p.textContent += content[i++];
+        setTimeout(tick, 20);
+      } else {
+        setTimeout(writeParagraph, 600);
+      }
+    };
+    tick();
+  }
+  writeParagraph();
+}
+
+/* ═══════════════════════════════════════════════
+   INIT & EVENTS
+═══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Start game
+  document.getElementById('btn-start').addEventListener('click', () => {
+    AudioEngine.init();
+    GameState.reset();
+    showScreen('screen-game');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('action-bar').classList.remove('hidden');
+    startRound();
+  });
+
+  // Confirm purchases
+  document.getElementById('btn-confirm').addEventListener('click', () => {
+    confirmRound();
+  });
+
+  // Skip round
+  document.getElementById('btn-skip').addEventListener('click', () => {
+    pendingPurchases = {};
+    confirmRound();
+  });
+
+  // Restart
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    GameState.reset();
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('action-bar').classList.remove('hidden');
+    showScreen('screen-game');
+    startRound();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Mute
+  const muteBtn = document.getElementById('btn-mute');
+  muteBtn.addEventListener('click', () => {
+    AudioEngine.init();
+    const muted = AudioEngine.toggle();
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+    muteBtn.setAttribute('aria-label', muted ? 'Zapnout hudbu' : 'Ztlumit hudbu');
+  });
+
+  // Keyboard navigation for cards (Enter/Space handled inside render)
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('overlay-summary').classList.contains('visible')) {
+      document.getElementById('btn-next-round').click();
+    }
+  });
+});
+</script>
+</body>
+</html>
